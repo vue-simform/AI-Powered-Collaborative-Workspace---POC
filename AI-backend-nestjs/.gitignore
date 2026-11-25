@@ -1,0 +1,6 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+# Uploaded project documents (private files, never committed)
+storage/

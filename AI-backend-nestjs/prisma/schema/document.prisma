@@ -1,0 +1,43 @@
+enum DocumentStatus {
+  UPLOADED
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+model ProjectDocument {
+  id           String          @id @default(cuid())
+  projectId    String
+  project      Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName     String
+  fileType     String // "pdf" | "docx"
+  fileSize     Int
+  storagePath  String // relative to DOCUMENTS_DIR, never sent to the client
+  contentHash  String // sha256 of the file, so the same file is not stored or embedded twice
+  status       DocumentStatus  @default(UPLOADED)
+  errorMessage String?
+  uploadedById String?
+  uploadedBy   User?           @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  chunks       DocumentChunk[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([projectId, contentHash])
+  @@index([projectId])
+}
+
+model DocumentChunk {
+  id         String                      @id @default(cuid())
+  projectId  String
+  documentId String
+  document   ProjectDocument             @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex Int
+  content    String
+  pageNumber Int?
+  section    String?
+  embedding  Unsupported("vector(768)")? // read and written with raw SQL (pgvector)
+  createdAt  DateTime                    @default(now())
+
+  @@index([projectId])
+  @@index([documentId])
+}
